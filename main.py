@@ -4,7 +4,7 @@ import argparse
 from dotenv import load_dotenv
 from openai import OpenAI
 from prompts import system_prompt
-from functions.call_function import available_functions
+from functions.call_function import available_functions, call_function
 
 parser = argparse.ArgumentParser(description="Chatbot")
 parser.add_argument("user_prompt", type=str, help="User prompt")
@@ -35,14 +35,14 @@ response = client.chat.completions.create(
 
 message = response.choices[0].message
 for tool_call in message.tool_calls:
-    function_args = json.loads(tool_call.function.arguments or "{}")
-    print(f"Calling function: {tool_call.function.name}({function_args})")
+    result_message = call_function(tool_call, verbose=args.verbose)
+    if result_message["content"] == "":
+        raise Exception("Function returned empty result")
+    if args.verbose:
+        print(f"-> {result_message['content']}")
 
 if response.usage is None:
     raise RuntimeError("failed api request")
 elif args.verbose:
     print(f"User prompt: {args.user_prompt}\nPrompt tokens: {response.usage.prompt_tokens}\nResponse tokens: {response.usage.completion_tokens}")
     
-print(response.choices[0].message.content)
-
-
