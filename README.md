@@ -31,16 +31,16 @@ The `calculator/` directory is the sample sandboxed project the agent operates o
 This project is managed with [uv](https://docs.astral.sh/uv/), and includes a `uv.lock` file.
 
 ```bash
-git clone https://github.com/Nine-9th/bootdev-ai-agent.git
-cd bootdev-ai-agent
+git clone https://github.com/Nine-9th/AI-chat-agent.git
+cd AI-chat-agent
 uv sync
 ```
 
 Or with plain `pip`:
 
 ```bash
-git clone https://github.com/Nine-9th/bootdev-ai-agent.git
-cd bootdev-ai-agent
+git clone https://github.com/Nine-9th/AI-chat-agent.git
+cd AI-chat-agent
 python -m venv venv
 source venv/bin/activate
 pip install openai==2.44.0 python-dotenv==1.1.0
@@ -72,10 +72,31 @@ Add `--verbose` to see token usage and tool call results as they happen:
 python main.py "list the files in the calculator directory" --verbose
 ```
 
+## Running in Docker (recommended)
+
+The agent executes Python code written by an LLM. The path checks stop it from *choosing* files outside `calculator/`, but a script it writes would still run with your user's full permissions. Running it in a container makes the sandbox real:
+
+- The container only sees `calculator/`, mounted from your machine; the rest of your filesystem is invisible
+- It runs as a non-root user, with a read-only filesystem apart from `calculator/` and `/tmp`
+- All Linux capabilities are dropped and privilege escalation is blocked
+- Memory, CPU and process count are capped, so a runaway script can't hog your machine
+- Scripts the agent runs don't receive your `OPENROUTER_API_KEY`
+
+With your `.env` file in place:
+
+```bash
+docker compose build
+docker compose run --rm agent "list the files in the calculator directory" --verbose
+```
+
+Changes the agent makes show up in your local `calculator/` folder.
+
+> The container still has network access (the agent needs it to reach OpenRouter), so code it runs could make outbound requests.
+
 ## Project structure
 
 ```
-bootdev-ai-agent/
+AI-chat-agent/
 ├── main.py         # CLI entry point, agent loop
 ├── config.py         # MAX_CHARS, MAX_ITERS settings
 ├── prompts.py        # System prompt
