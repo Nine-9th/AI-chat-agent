@@ -43,7 +43,17 @@ def run_python_file(
         command = ["python", target_file]
         if args:
             command.extend(args)
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+        # Don't hand the API key to code the model wrote.
+        child_env = {k: v for k, v in os.environ.items() if k != "OPENROUTER_API_KEY"}
+        result = subprocess.run(
+            command,
+            cwd=absolute_path,
+            env=child_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=30,
+        )
         if result.returncode != 0:
             return f"Process exited with code {result.returncode}: {result.stderr.strip()}"
         if result.stdout is None and result.stderr is None:
